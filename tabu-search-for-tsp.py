@@ -47,7 +47,7 @@ def read_matrix_from_file(filename): # hàm đọc file ATSP và trả về mộ
             if start_parsing:
                 row = list(map(int, line.split()))
                 dist_matrix.append(row)
-
+    
     return dist_matrix
 
 # def distance_matrix(node_coords): # hàm tính ma trận khoảng cách giữa các thành phố
@@ -73,7 +73,7 @@ def fitness(route, dist_matrix): # hàm tính tổng khoảng cách của một 
     return total_dist
 
 # hàm thuật toán tìm kiếm tabu 
-def tabu_search(dist_matrix, tabu_list_size=50, max_iterations=20000, remove_tabu_after=20):
+def tabu_search(dist_matrix, tabu_list_size=25, max_iterations=12000, remove_tabu_after=25):
     n = len(dist_matrix)
     best_route = init_solution(n)
     best_fitness = fitness(best_route, dist_matrix)
@@ -81,7 +81,8 @@ def tabu_search(dist_matrix, tabu_list_size=50, max_iterations=20000, remove_tab
     tabu_count = 0
 
     for i in range(max_iterations):
-        candidate_routes = generate_candidate_routes(best_route, tabu_list, tabu_list_size)
+        # candidate_routes = generate_candidate_routes(best_route, tabu_list)
+        candidate_routes = get_neighborhood(best_route)
         best_candidate = None
         best_candidate_fitness = float('inf')
         
@@ -95,7 +96,8 @@ def tabu_search(dist_matrix, tabu_list_size=50, max_iterations=20000, remove_tab
                     tabu_list.remove(candidate)
                     best_candidate = candidate
                     best_candidate_fitness = candidate_fitness
-                    tabu_list.append(best_route)
+                    tabu_list = []
+                    tabu_count = 0
             else:
                 if candidate_fitness < best_candidate_fitness:
                     best_candidate = candidate
@@ -106,39 +108,33 @@ def tabu_search(dist_matrix, tabu_list_size=50, max_iterations=20000, remove_tab
             best_route = best_candidate
             best_fitness = best_candidate_fitness
         
-        # Thêm lời giải tốt nhất vào danh sách tabu
-        tabu_list.append(best_route)
         if len(tabu_list) > tabu_list_size:
             tabu_list.pop(0)
+            
+        # Thêm lời giải tốt nhất vào danh sách tabu
+        tabu_list.append(best_route)
+        tabu_count += 1
         
         # Xóa các lời giải trong danh sách tabu nếu đã đủ số lượng lời giải tối đa
-        tabu_count += 1
         if tabu_count == remove_tabu_after:
             tabu_list = []
             tabu_count = 0
-    
+            
     # Trả về tuyến đường và chi phí tốt nhất tìm được
     return best_route, best_fitness
 
-def generate_candidate_routes(route, tabu_list, tabu_list_size): # hàm trả về các tuyến đường ứng cử viên
-    candidates = []
-    neighborhood = get_neighborhood(route) # Lấy danh sách lân cận của tuyến đường hiện tại
-    for candidate_route in neighborhood:
+# def generate_candidate_routes(route, tabu_list): # hàm trả về các tuyến đường ứng cử viên
+#     candidates = []
+#     neighborhood = get_neighborhood(route) # Lấy danh sách lân cận của tuyến đường hiện tại
+#     for candidate_route in neighborhood:
         # Kiểm tra xem tuyến đường ứng viên đã nằm trong danh sách tabu_list hay chưa
-        if candidate_route not in tabu_list:
-            candidates.append(candidate_route)
-
-            # Nếu danh sách tabu_list đã đầy, loại bỏ tuyến đường lâu nhất khỏi danh sách
-            if len(tabu_list) == tabu_list_size:
-                tabu_list.pop(0)
-
-            # Thêm tuyến đường ứng viên mới vào danh sách tabu_list
-            tabu_list.append(candidate_route)
+    #     if candidate_route not in tabu_list:
+    #         candidates.append(candidate_route)
             
-    return candidates
+    # return candidates
 
 filepath = "data.txt"
-filename = "test4.txt"
+filename = "ftv38(ATSP).txt"
 # node_coords = read_node_coords(filepath)
 # dist_matrix = distance_matrix(node_coords)
 dist_matrix = read_matrix_from_file(filename)
